@@ -5,13 +5,66 @@ services:
     image: postgres:16.1-bullseye
     restart: always
     ports:
-      - 5435:5432
+      - 5432:5432
     environment:
       - POSTGRES_DB=wb_orders
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
+      - POSTGRES_PORT=5432
     volumes:
       - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  migrations:
+    image: migrate/migrate
+    command: -database postgres://postgres:postgres@db:5432/wb_orders?sslmode=disable -path /migrations up
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./migrations/:/migrations
+  stan:
+    image: nats-streaming:alpine3.18
+    restart: always
+    ports:
+      - 4222:4222
+      - 8222:8222
+    volumes:
+      - ~/volumes/data/nats:/datastore
+    depends_on:
+      - db
+      - migrations
+    command:
+      # - "--cluster"
+      # - "nats://0.0.0.0:6222"
+      - "--cluster_id"
+      - stan
+      # - "--cluster_node_id"
+      # - stan-1
+      - "--debug"
+      # - "--dir"
+      # - /data/msg
+      - "--http_port"
+      - "8222"
+      - "--port"
+      - "4222"
+  server: 
+    build:
+      dockerfile: ./cmd/sub/Dockerfile.dev
+    # restart: on-failure
+    ports:
+      - 80:80
+    depends_on:
+      - stan
+    environment:
+      - POSTGRES_DB=wb_orders
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_PORT=5432
+      - NATS_URL=nats://stan:4222
 
 volumes:
   pg_data:

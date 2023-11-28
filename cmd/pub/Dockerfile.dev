@@ -1,0 +1,12 @@
+FROM golang:alpine AS builder
+
+WORKDIR /build
+ADD go.mod .
+COPY . .
+RUN go build -o publisher ./cmd/pub/publisher.go
+
+FROM alpine
+
+WORKDIR /build
+COPY --from=builder /build/publisher /build/publisher
+CMD [". /publisher"]

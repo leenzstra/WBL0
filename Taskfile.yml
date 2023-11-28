@@ -1,0 +1,16 @@
+version: '3'
+
+tasks:
+  build:
+    cmds:
+      - docker-compose -f docker-compose.dev.yml build
+
+  up:
+    cmds:
+      - docker-compose -f docker-compose.dev.yml up
+
+  run:
+    cmds:
+      - task: build
+      - task: up
+  
