@@ -1,23 +1,28 @@
 package main
 
 import (
-	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"os"
 	"time"
 
-	"github.com/leenzstra/WBL0/db"
+	"github.com/goccy/go-json"
+	"github.com/leenzstra/WBL0/internal/models"
+
 	"github.com/nats-io/stan.go"
 	"go.uber.org/zap"
 )
 
 const (
-	modelsFile      = "wb_l0_data.json"
+	modelsFile      = "./_task/wb_l0_data.json"
 	waitDurationSec = 5
+	clusterId = "stan"
+	clientId = "aboba_publisher"
+	natsUrl = "nats://localhost:4222"
 )
 
-func readOrdersFromFile(file string) []*db.OrderModel {
+func readOrdersFromFile(file string) []*models.OrderModel {
 	f, err := os.Open(file)
 	if err != nil {
 		log.Fatalf("Error opening file: %v", err)
@@ -29,13 +34,22 @@ func readOrdersFromFile(file string) []*db.OrderModel {
 		log.Fatalf("Error reading file: %v", err)
 	}
 
-	var data []*db.OrderModel
+	var data []*models.OrderModel
 	err = json.Unmarshal(content, &data)
 	if err != nil {
 		log.Fatal("Error during Unmarshal(): ", err)
 	}
 
 	return data
+}
+
+func countUnique(orders []*models.OrderModel) int {
+	counter := make(map[string]int )    
+	for _, o := range orders {
+		counter[o.OrderUID]++
+	} 
+
+	return len(counter)
 }
 
 func main() {
@@ -46,10 +60,13 @@ func main() {
 		panic(err)
 	}
 
-	sc, err := stan.Connect("stan", "aboba_publisher", stan.NatsURL("nats://localhost:4222"))
+	sc, err := stan.Connect(clusterId, clientId, stan.NatsURL(natsUrl))
 	if err != nil {
 		panic(err)
 	}
+
+	uc := countUnique(data)
+	logger.Info("unique orders = " + fmt.Sprint(uc))
 
 	for _, order := range data {
 		orderJson, err := json.Marshal(order)
@@ -60,8 +77,9 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		break
-		time.Sleep(waitDurationSec * time.Second)
+		// break
+		fmt.Println(order.OrderUID)
+		time.Sleep(waitDurationSec * time.Microsecond)
 	}
 
 }

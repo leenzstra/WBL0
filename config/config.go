@@ -1,11 +1,13 @@
 package config
 
 type Config struct {
-	ConnUrl string
+	PgUrl string
+	NatsUrl string
 }
 
-func New(connUrl string) Config {
+func New(pgUrl string, natsUrl string) Config {
 	return Config{
-		ConnUrl: connUrl,
+		PgUrl: pgUrl,
+		NatsUrl: natsUrl,
 	}
 }

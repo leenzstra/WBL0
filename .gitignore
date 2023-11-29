@@ -1,6 +1,7 @@
-model.json
-wb_l0_data.json
+# _task
+vegeta.exe
 
 *.test
 *.out
+*.html
 go.work

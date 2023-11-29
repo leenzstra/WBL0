@@ -3,14 +3,25 @@ version: '3'
 tasks:
   build:
     cmds:
-      - docker-compose -f docker-compose.dev.yml build
+      - docker-compose -f docker-compose.dev.yml --env-file ./config/dev.env build
 
   up:
     cmds:
-      - docker-compose -f docker-compose.dev.yml up
+      - docker-compose -f docker-compose.dev.yml --env-file ./config/dev.env up
 
   run:
     cmds:
       - task: build
       - task: up
   
+  bench_one:
+    cmds:
+      - bench/vegeta attack -duration=20s -rate=50 -targets=bench/target.list -output=vegeta.out
+
+  bench_multiple:
+    cmds:
+      - bench/vegeta attack -duration=20s -rate=50 -targets=bench/target_cache.list -output=vegeta.out
+
+  report:
+    cmds:
+      - bench/vegeta plot -title=AttackResults vegeta.out > vegeta.html

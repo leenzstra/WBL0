@@ -5,12 +5,12 @@ services:
     image: postgres:16.1-bullseye
     restart: always
     ports:
-      - 5432:5432
+      - ${PG_PORT}:${PG_PORT}
     environment:
-      - POSTGRES_DB=wb_orders
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_PORT=5432
+      POSTGRES_DB: '${PG_DB}'
+      POSTGRES_USER: 'postgres'
+      POSTGRES_PASSWORD: 'postgres'
+      POSTGRES_PORT: ${PG_PORT}
     volumes:
       - pg_data:/var/lib/postgresql/data
     healthcheck:
@@ -18,14 +18,16 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
   migrations:
     image: migrate/migrate
-    command: -database postgres://postgres:postgres@db:5432/wb_orders?sslmode=disable -path /migrations up
+    command: -database postgres://postgres:postgres@db:${PG_PORT}/${PG_DB}?sslmode=disable -path /migrations up
     depends_on:
       db:
         condition: service_healthy
     volumes:
       - ./migrations/:/migrations
+
   stan:
     image: nats-streaming:alpine3.18
     restart: always
@@ -41,7 +43,7 @@ services:
       # - "--cluster"
       # - "nats://0.0.0.0:6222"
       - "--cluster_id"
-      - stan
+      - ${STAN_CLUSTER_ID}
       # - "--cluster_node_id"
       # - stan-1
       - "--debug"
@@ -60,11 +62,8 @@ services:
     depends_on:
       - stan
     environment:
-      - POSTGRES_DB=wb_orders
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_PORT=5432
-      - NATS_URL=nats://stan:4222
+      POSTGRES_URL: 'postgres://${PG_USER_CLIENT}:${PG_PASS_CLIENT}@db:${PG_PORT}/${PG_DB}'
+      NATS_URL: 'nats://stan:4222'
 
 volumes:
   pg_data:
