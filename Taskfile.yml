@@ -13,15 +13,23 @@ tasks:
     cmds:
       - task: build
       - task: up
+
+  prune:
+    cmds:
+      - docker builder prune
   
   bench_one:
     cmds:
       - bench/vegeta attack -duration=20s -rate=50 -targets=bench/target.list -output=vegeta.out
+      - task: report
 
   bench_multiple:
     cmds:
       - bench/vegeta attack -duration=20s -rate=50 -targets=bench/target_cache.list -output=vegeta.out
+      - task: report
 
   report:
     cmds:
       - bench/vegeta plot -title=AttackResults vegeta.out > vegeta.html
+      - start vegeta.html
+      - del vegeta.out vegeta.html

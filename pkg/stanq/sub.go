@@ -6,9 +6,9 @@ import (
 	"go.uber.org/zap"
 )
 
-type StanServer struct {
+type StanConsumer struct {
 	notify chan error
-	clustedId string
+	clusterId string
 	clientId string
 	natsUrl string
 	logger *zap.Logger
@@ -16,10 +16,10 @@ type StanServer struct {
 	sub stan.Subscription
 }
 
-func New(clustedId, clientId, natsUrl string, logger *zap.Logger) *StanServer {
-	s := &StanServer{
+func NewConsumer(clusterId, clientId, natsUrl string, logger *zap.Logger) *StanConsumer {
+	s := &StanConsumer{
 		notify: make(chan error, 1),
-		clustedId:    clustedId,
+		clusterId:    clusterId,
 		clientId: clientId,
 		natsUrl: natsUrl,
 		logger: logger,
@@ -28,36 +28,32 @@ func New(clustedId, clientId, natsUrl string, logger *zap.Logger) *StanServer {
 	return s
 }
 
-func (s *StanServer) Start(topic string, handler stan.MsgHandler) {
-	conn, err := stan.Connect(s.clustedId, s.clientId, stan.NatsURL(s.natsUrl))
+func (s *StanConsumer) Start(topic string, handler stan.MsgHandler) error {
+	conn, err := stan.Connect(s.clusterId, s.clientId, stan.NatsURL(s.natsUrl))
+	if err != nil {
+		return err
+	}
 	s.conn = conn
-	if err != nil {
-		s.notify <- err
-		return
-	}
 
-	sub, err := conn.Subscribe(topic,handler,stan.StartWithLastReceived())
-	s.sub = sub
+	sub, err := conn.Subscribe(topic,handler,stan.StartWithLastReceived(), stan.DurableName("durable."+topic))
 	if err != nil {
-		s.notify <- err
-		return
+		return err
 	}
+	s.sub = sub
 
 	s.conn.NatsConn().SetDisconnectErrHandler(func(*nats.Conn, error) {
 		s.notify <- err
 	})
 	
 	s.logger.Info("Stan started")
+	
+	return nil
 }
 
-func (s *StanServer) Notify() <-chan error {
+func (s *StanConsumer) Notify() <-chan error {
 	return s.notify
 }
 
-func (s *StanServer) Shutdown() error {
-	err := s.conn.Close()
-	if err != nil {
-		return err
-	}
+func (s *StanConsumer) Shutdown() error {
 	return s.conn.Close()
 }

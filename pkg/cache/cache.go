@@ -10,6 +10,7 @@ type ICache[K comparable, V any] interface {
 	GetItem(key K) (V, bool)
 	SetItem(key K, value V) bool
 	HasItem(key K) bool
+	Len() int
 }
 
 type MemoryCache[K comparable, V any] struct {
@@ -44,3 +45,6 @@ func (c *MemoryCache[K, V]) HasItem(key K) bool {
 	return c.Has(key)
 }
 
+func (c *MemoryCache[K, V]) LenItems() int {
+	return c.Len()
+}

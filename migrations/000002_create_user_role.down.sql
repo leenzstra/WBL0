@@ -1,0 +1,2 @@
+REVOKE SELECT, INSERT ON ALL TABLES IN SCHEMA public TO rw_user;
+DROP ROLE rw_user;

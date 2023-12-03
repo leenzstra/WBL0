@@ -5,7 +5,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/monitor"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/leenzstra/WBL0/internal/controller/http/httpv1"
-	"github.com/leenzstra/WBL0/internal/usecases/orders"
+	"github.com/leenzstra/WBL0/internal/services/orders"
 	"go.uber.org/zap"
 )
 

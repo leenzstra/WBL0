@@ -8,8 +8,8 @@ services:
       - ${PG_PORT}:${PG_PORT}
     environment:
       POSTGRES_DB: '${PG_DB}'
-      POSTGRES_USER: 'postgres'
-      POSTGRES_PASSWORD: 'postgres'
+      POSTGRES_USER: '${PG_USER_ADMIN}'
+      POSTGRES_PASSWORD: '${PG_PASS_ADMIN}'
       POSTGRES_PORT: ${PG_PORT}
     volumes:
       - pg_data:/var/lib/postgresql/data
@@ -21,7 +21,7 @@ services:
 
   migrations:
     image: migrate/migrate
-    command: -database postgres://postgres:postgres@db:${PG_PORT}/${PG_DB}?sslmode=disable -path /migrations up
+    command: -database postgres://${PG_USER_ADMIN}:${PG_PASS_ADMIN}@db:${PG_PORT}/${PG_DB}?sslmode=disable -path /migrations up
     depends_on:
       db:
         condition: service_healthy
@@ -35,7 +35,7 @@ services:
       - 4222:4222
       - 8222:8222
     volumes:
-      - ~/volumes/data/nats:/datastore
+      - "stan_data:/data"
     depends_on:
       - db
       - migrations
@@ -43,12 +43,14 @@ services:
       # - "--cluster"
       # - "nats://0.0.0.0:6222"
       - "--cluster_id"
-      - ${STAN_CLUSTER_ID}
+      - ${NATS_CLUSTER_ID}
       # - "--cluster_node_id"
       # - stan-1
       - "--debug"
-      # - "--dir"
-      # - /data/msg
+      - "-store"
+      - "file"
+      - "--dir"
+      - /data/msg
       - "--http_port"
       - "8222"
       - "--port"
@@ -56,7 +58,7 @@ services:
   server: 
     build:
       dockerfile: ./cmd/sub/Dockerfile.dev
-    # restart: on-failure
+    restart: on-failure
     ports:
       - 80:80
     depends_on:
@@ -64,6 +66,10 @@ services:
     environment:
       POSTGRES_URL: 'postgres://${PG_USER_CLIENT}:${PG_PASS_CLIENT}@db:${PG_PORT}/${PG_DB}'
       NATS_URL: 'nats://stan:4222'
+      ORDERS_TOPIC: ${ORDERS_TOPIC}
+      STATE: ${STATE}
+      NATS_CLUSTER_ID: ${NATS_CLUSTER_ID}
 
 volumes:
   pg_data:
+  stan_data:

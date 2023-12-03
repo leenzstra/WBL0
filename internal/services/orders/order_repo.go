@@ -13,6 +13,7 @@ import (
 type IOrderRepo interface {
 	Add(ctx context.Context, order models.OrderModel) error
 	Get(ctx context.Context, uid string) (*models.OrderModel, error)
+	GetAll(ctx context.Context) ([]models.OrderModel, error)
 }
 
 type OrderRepo struct {
@@ -56,19 +57,14 @@ func (r *OrderRepo) Get(ctx context.Context, uid string) (*models.OrderModel, er
 		From("orders").
 		Where(squirrel.Eq{"order_uid": uid}).
 		ToSql()
-	// fmt.Println(sql)
-	// fmt.Println(args)
 	if err != nil {
 		return nil, fmt.Errorf("OrderRepo.Get.r.Builder: %w", err)
 	}
 
 	o := make([]models.OrderModel, 1)
 	err = pgxscan.Select(ctx, r.Pool, &o, sql, args...)
-	// row := r.Pool.QueryRow(ctx, sql, args...)
-
-	// err = row.Scan(o)
 	if err != nil {
-		return nil, fmt.Errorf("OrderRepo.Get.row.Scan: %w", err)
+		return nil, fmt.Errorf("OrderRepo.Get.Select: %w", err)
 	}
 
 	if len(o) != 1 {
@@ -78,4 +74,22 @@ func (r *OrderRepo) Get(ctx context.Context, uid string) (*models.OrderModel, er
 	return &o[0], nil
 }
 
+func (r *OrderRepo) GetAll(ctx context.Context) ([]models.OrderModel, error) {
+	sql, _, err := r.Builder.
+		Select("*").
+		From("orders").
+		ToSql()
+
+	if err != nil {
+		return nil, fmt.Errorf("OrderRepo.GetAll.r.Builder: %w", err)
+	}
+
+	o := make([]models.OrderModel, 0)
+	err = pgxscan.Select(ctx, r.Pool, &o, sql)
+	if err != nil {
+		return nil, fmt.Errorf("OrderRepo.GetAll.Select: %w", err)
+	}
+
+	return o, nil
+}
 

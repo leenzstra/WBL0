@@ -6,7 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/leenzstra/WBL0/internal/models"
 	"github.com/leenzstra/WBL0/internal/models/response"
-	"github.com/leenzstra/WBL0/internal/usecases/orders"
+	"github.com/leenzstra/WBL0/internal/services/orders"
 	"go.uber.org/zap"
 )
 

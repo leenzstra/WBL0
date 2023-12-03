@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"os"
 	"os/signal"
 	"syscall"
@@ -11,42 +12,60 @@ import (
 	"github.com/leenzstra/WBL0/internal/controller/http"
 	"github.com/leenzstra/WBL0/internal/controller/stan"
 	"github.com/leenzstra/WBL0/internal/models"
-	"github.com/leenzstra/WBL0/internal/usecases/orders"
+	"github.com/leenzstra/WBL0/internal/services/orders"
 	"github.com/leenzstra/WBL0/pkg/cache"
 	"github.com/leenzstra/WBL0/pkg/database"
 	"github.com/leenzstra/WBL0/pkg/logger"
 	"github.com/leenzstra/WBL0/pkg/server"
 	"github.com/leenzstra/WBL0/pkg/stanq"
+	"go.uber.org/zap"
+)
+
+const (
+	logsFile = "/wb.log"
+	addr = ":80"
+	consumerId = "consumer-1"
 )
 
 func Run(config *config.Config) {
-	// TODO все брать из конфига
-	logger, err := logger.New("/wb.log", true)
+	logger, err := logger.New(logsFile, config.Debug)
 	if err != nil {
-		// TODO ???
 		panic(err)
 	}
 
+	// база данных заказов
 	db, err := database.New(config.PgUrl, logger)
 	if err != nil {
 		logger.Fatal(err.Error())
 	}
 	defer db.Close()
 
+	// сервис работы с заказами
 	ordersService := orders.NewService(
 		orders.NewRepo(db),
-		cache.New[string, models.OrderModel](30 * time.Minute),
+		cache.New[string, models.OrderModel](24 * time.Hour),
 		logger,
 	)
 
+	// восстановление кэша из БД
+	err = ordersService.RestoreCache(context.Background())
+	if err != nil {
+		logger.Fatal(err.Error())
+	}
+
+	// http сервер
 	app := fiber.New()
 	http.SetupRouter(app, logger, ordersService)
 	server := server.New(app, logger)
-	server.Listen(":80")
+	server.Listen(addr)
 
+	// stan consumer
 	msgHandler := stan.HandleOrderMessage(logger, ordersService)
-	stanServer := stanq.New("stan", "server", config.NatsUrl, logger)
-	stanServer.Start("main", msgHandler)
+	stanServer := stanq.NewConsumer(config.ClusterId, consumerId, config.NatsUrl, logger)
+	err = stanServer.Start(config.Topic, msgHandler)
+	if err != nil {
+		logger.Fatal(err.Error(), zap.String("cluster", config.ClusterId))
+	}
 
 	logger.Info("All services ready")
 
