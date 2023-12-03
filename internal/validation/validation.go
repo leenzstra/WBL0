@@ -14,6 +14,6 @@ func NewOrderValidator(options ...validator.Option) *OrderValidator {
 }
 
 func (v *OrderValidator) ValidateOrder(order models.OrderModel) error {
-	return v.Struct(order)
-
+	err :=v.Struct(order)
+	return err
 }

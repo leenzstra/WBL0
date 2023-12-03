@@ -16,7 +16,5 @@ func New(logFile string, debug bool) (*zap.Logger, error) {
 		return nil, err
 	}
 
-	logger.Info("Logger started")
-
 	return logger, nil
 }

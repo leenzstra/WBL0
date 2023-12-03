@@ -15,30 +15,30 @@ type ordersHandler struct {
 	logger *zap.Logger
 }
 
-func SetupOrdersRoutes(group fiber.Router, service *orders.OrdersService, logger *zap.Logger) {
-	h := &ordersHandler{service, logger}
-
-	// routes
-	group.Get("/:uid", h.order)
-}
-
 type orderResponse struct {
 	Order models.OrderModel `json:"order"`
+}
+
+func SetupOrderRoutes(group fiber.Router, service *orders.OrdersService, logger *zap.Logger) {
+	h := &ordersHandler{service, logger}
+
+	group.Get("/:uid", h.order)
 }
 
 func (h *ordersHandler) order(c *fiber.Ctx) error {
 	uid := c.Params("uid")
 	if uid == "" {
-		return c.JSON(response.Error[any]("no uid"))
+		c.JSON(response.Error[any]("no uid"))
+		return c.SendStatus(400)
 	}
 
 	order, err := h.ordersService.GetOrder(context.Background(), uid)
 	if err != nil {
-		return c.JSON(response.Error[any]("get order error"))
+		c.JSON(response.Error[any]("get order error"))
+		return c.SendStatus(400)
 	}
 
 	r := orderResponse{*order}
-
 	return c.JSON(response.Ok[orderResponse](r))
 }
 

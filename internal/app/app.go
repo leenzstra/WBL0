@@ -27,17 +27,35 @@ const (
 	consumerId = "consumer-1"
 )
 
+func setupDatabase(url string, l *zap.Logger) (*database.DB) {
+	// создаем pgxpool (интерфейс IPool)
+	pool, err := database.NewPgxPool(url)
+	if err != nil {
+		l.Fatal(err.Error())
+	}
+
+	// создаем pgxscan (интерфейс IScanner)
+	scanner, err := database.NewPgxScanner()
+	if err != nil {
+		l.Fatal(err.Error())
+	}
+
+	// база данных заказов
+	db, err := database.New(pool, database.PgxBuilder, scanner, l)
+	if err != nil {
+		l.Fatal(err.Error())
+	}
+
+	return db
+}
+
 func Run(config *config.Config) {
 	logger, err := logger.New(logsFile, config.Debug)
 	if err != nil {
 		panic(err)
 	}
 
-	// база данных заказов
-	db, err := database.New(config.PgUrl, logger)
-	if err != nil {
-		logger.Fatal(err.Error())
-	}
+	db := setupDatabase(config.PgUrl, logger)
 	defer db.Close()
 
 	// сервис работы с заказами

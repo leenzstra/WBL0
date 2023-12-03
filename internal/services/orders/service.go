@@ -76,7 +76,7 @@ func (s *OrdersService) GetAllOrders(ctx context.Context) ([]models.OrderModel, 
 }
 
 func (s *OrdersService) RestoreCache(ctx context.Context) error {
-	orders, err := s.GetAllOrders(ctx)
+	orders, err := s.orderRepo.GetAll(ctx)
 	if err != nil {
 		ferr := fmt.Errorf("RestoreCache.GetAllOrders: %w", err)
 		s.logger.Error(ferr.Error())

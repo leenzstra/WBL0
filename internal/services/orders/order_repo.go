@@ -36,8 +36,6 @@ func (r *OrderRepo) Add(ctx context.Context, order models.OrderModel) error {
 			order.InternalSignature, order.CustomerID, order.DeliveryService, order.Shardkey, order.SmID, 
 			order.DateCreated, order.OofShard).
 		ToSql()
-
-	fmt.Printf("%s %+v %+v\n", sql, args, order)
 	
 	if err != nil {
 		return fmt.Errorf("OrderRepo.Add.r.Builder: %w", err)

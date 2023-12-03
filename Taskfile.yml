@@ -14,6 +14,15 @@ tasks:
       - task: build
       - task: up
 
+  test:
+    cmds:
+      - go test -v -cover ./...
+
+  cover:
+    cmds:
+      - go test -v -coverprofile=coverage.out ./...
+      - go tool cover -html=coverage.out
+
   prune:
     cmds:
       - docker builder prune
@@ -32,4 +41,3 @@ tasks:
     cmds:
       - bench/vegeta plot -title=AttackResults vegeta.out > vegeta.html
       - start vegeta.html
-      - del vegeta.out vegeta.html

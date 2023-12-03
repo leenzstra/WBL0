@@ -74,7 +74,7 @@ type OrderModel struct {
 	CustomerID        string            `json:"customer_id" db:"customer_id" validate:"required"`
 	DeliveryService   string            `json:"delivery_service" db:"delivery_service" validate:"required"`
 	Shardkey          string            `json:"shardkey" db:"shardkey" validate:"required"`
-	SmID              int               `json:"sm_id" db:"sm_id" validate:"required"`
+	SmID              int               `json:"sm_id" db:"sm_id"`
 	DateCreated       time.Time         `json:"date_created" db:"date_created" validate:"required"`
 	OofShard          string            `json:"oof_shard" db:"oof_shard" validate:"required"`
 }

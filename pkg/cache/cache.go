@@ -6,6 +6,7 @@ import (
 	"github.com/jellydator/ttlcache/v3"
 )
 
+//go:generate mockery --name ICache
 type ICache[K comparable, V any] interface {
 	GetItem(key K) (V, bool)
 	SetItem(key K, value V) bool

@@ -4,17 +4,32 @@ import (
 	"context"
 
 	"github.com/Masterminds/squirrel"
+	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 )
 
+var (
+	PgxBuilder = squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
+)
+
 type DB struct {
-	Pool    *pgxpool.Pool
+	Pool    IPool
 	Logger  *zap.Logger
 	Builder *squirrel.StatementBuilderType
+	Scanner IScanner
 }
 
-func New(connUrl string, logger *zap.Logger) (*DB, error) {
+func NewPgxScanner() (*pgxscan.API, error) {
+	dbscanApi, err := pgxscan.NewDBScanAPI()
+	if err != nil {
+		return nil, err
+	}
+
+	return pgxscan.NewAPI(dbscanApi)
+}
+
+func NewPgxPool(connUrl string) (*pgxpool.Pool, error) {
 	config, err := pgxpool.ParseConfig(connUrl)
 	if err != nil {
 		return nil, err
@@ -25,14 +40,17 @@ func New(connUrl string, logger *zap.Logger) (*DB, error) {
 		return nil, err
 	}
 
-	builder := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
+	return pool, err
+}
 
+func New(pool IPool, builder squirrel.StatementBuilderType, scanner IScanner, logger *zap.Logger) (*DB, error) {
 	logger.Info("Database started")
 
 	return &DB{
 		Pool:    pool,
 		Logger:  logger,
 		Builder: &builder,
+		Scanner: scanner,
 	}, nil
 }
 
