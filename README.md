@@ -8,7 +8,7 @@ WB level 0 task
 - Http server - subscriber
 - Client - publisher
 
-Запуск через docker compose
+Для работы требуется docker compose, taskfile, go 1.21.4
 
 Что можно еще улучшить:
 1. Тестирование БД с помощью cockroachdb testserver
