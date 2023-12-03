@@ -28,13 +28,17 @@ func SetupOrderRoutes(group fiber.Router, service *orders.OrdersService, logger 
 func (h *ordersHandler) order(c *fiber.Ctx) error {
 	uid := c.Params("uid")
 	if uid == "" {
-		c.JSON(response.Error[any]("no uid"))
+		if err := c.JSON(response.Error[any]("no uid")); err != nil {
+			return err
+		}
 		return c.SendStatus(400)
 	}
 
 	order, err := h.ordersService.GetOrder(context.Background(), uid)
 	if err != nil {
-		c.JSON(response.Error[any]("get order error"))
+		if err := c.JSON(response.Error[any]("get order error")); err != nil {
+			return err
+		}
 		return c.SendStatus(400)
 	}
 

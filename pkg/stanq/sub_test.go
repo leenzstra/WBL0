@@ -56,9 +56,10 @@ func (suite *SubSuite) TestShutdown() {
 	logger := zap.NewNop()
 	
 	sub := NewConsumer(clusterName, clientName, fmt.Sprintf("nats://localhost:%d", testPort), logger)
-	sub.Start("test_topic", func(msg *stan.Msg) {})
+	err := sub.Start("test_topic", func(msg *stan.Msg) {})
+	suite.Nil(err)
 
-	err := sub.Shutdown()
+	err = sub.Shutdown()
 	suite.Nil(err)
 }
 
@@ -66,9 +67,10 @@ func (suite *SubSuite) TestNotifyError() {
 	logger := zap.NewNop()
 	
 	pub := NewPublisher(clusterName, clientName, fmt.Sprintf("nats://localhost:%d", testPort), logger)
-	pub.Start("test_topic")
+	err := pub.Start("test_topic")
+	suite.Nil(err)
 
 	pub.notify <- errors.New("test error")
-	err := <- pub.Notify()
+	err = <- pub.Notify()
 	suite.Error(err)
 }

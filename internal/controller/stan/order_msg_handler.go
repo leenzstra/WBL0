@@ -46,6 +46,6 @@ func handleOrderFunc(data []byte, logger *zap.Logger, service *orders.OrdersServ
 
 func HandleOrderMessage(logger *zap.Logger, service *orders.OrdersService) stan.MsgHandler {
 	return func(m *stan.Msg) {
-		handleOrderFunc(m.Data, logger, service)
+		handleOrderFunc(m.Data, logger, service) //nolint:errcheck
 	}
 }
