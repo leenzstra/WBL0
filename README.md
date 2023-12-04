@@ -11,6 +11,7 @@ WB level 0 task
 Запуск через docker-compose, taskfile, go 1.21.4
 
 API - localhost/api/v1/orders/:uid
+
 UI - localhost/ui
 
 - cmd/sub/server.go - сервис
