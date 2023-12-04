@@ -1,9 +1,9 @@
 # _task
 vegeta.exe
 mockery.exe
+test.py
 
 *.test
 *.out
-*.html
 go.work
 *.log

@@ -13,6 +13,8 @@ func SetupRouter(app *fiber.App, logger *zap.Logger, service *orders.OrdersServi
 	app.Use(recover.New())
 	app.Get("/metrics", monitor.New())
 
+	app.Static("/ui", "./static")
+
 	api := app.Group("/api")
 
 	apiv1 := api.Group("/v1")

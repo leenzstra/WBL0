@@ -9,5 +9,6 @@ FROM alpine
 
 WORKDIR /build
 COPY --from=builder /build/server /build/server
+COPY /static /build/static
 RUN chmod +x server
 CMD ["/build/server"]

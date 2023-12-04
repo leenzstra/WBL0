@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	modelsFile      = "./_task/wb_l0_data.json"
+	modelsFile      = "./_task/wb_l0_data_1000.json"
 	waitDurationSec = 5
 	clusterId = "stan"
 	topic = "orders"

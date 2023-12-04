@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orders</title>
+</head>
+
+<body>
+    <h1>Order info</h1>
+
+    <div>
+        <input type="text" id="orderUid" placeholder="UID">
+    </div>
+    <div>
+        <button onclick="sendRequest()">Search</button>
+    </div>
+
+    <h2>Order:</h2>
+    <div>
+        <p style="height: 100%; width: 50%; display: block;">
+            <pre id="result">
+                -
+            </pre>
+        </p>
+    </div>
+
+    <script>
+        async function sendRequest() {
+                var orderUid = document.getElementById('orderUid').value;
+                // test - c9d61ue8szsrOBPddD7
+                let url = 'http://localhost:80/api/v1/orders/' + orderUid;
+                let response = await fetch(url);
+
+                let data = await response.json()
+                document.getElementById('result').textContent = JSON.stringify(data, null, 4);
+            }
+    </script>
+</body>
+
+</html>
