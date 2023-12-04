@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/Masterminds/squirrel"
-	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/leenzstra/WBL0/internal/models"
 	"github.com/leenzstra/WBL0/pkg/database"
 )
@@ -59,8 +58,8 @@ func (r *OrderRepo) Get(ctx context.Context, uid string) (*models.OrderModel, er
 		return nil, fmt.Errorf("OrderRepo.Get.r.Builder: %w", err)
 	}
 
-	o := make([]models.OrderModel, 1)
-	err = pgxscan.Select(ctx, r.Pool, &o, sql, args...)
+	var o []models.OrderModel
+	err = r.DB.Scanner.Select(ctx, r.Pool, &o, sql, args...)
 	if err != nil {
 		return nil, fmt.Errorf("OrderRepo.Get.Select: %w", err)
 	}
@@ -82,8 +81,8 @@ func (r *OrderRepo) GetAll(ctx context.Context) ([]models.OrderModel, error) {
 		return nil, fmt.Errorf("OrderRepo.GetAll.r.Builder: %w", err)
 	}
 
-	o := make([]models.OrderModel, 0)
-	err = pgxscan.Select(ctx, r.Pool, &o, sql)
+	var o []models.OrderModel
+	err = r.DB.Scanner.Select(ctx, r.Pool, &o, sql)
 	if err != nil {
 		return nil, fmt.Errorf("OrderRepo.GetAll.Select: %w", err)
 	}

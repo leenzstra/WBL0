@@ -10,7 +10,7 @@ import (
 	"github.com/leenzstra/WBL0/internal/models"
 	"github.com/leenzstra/WBL0/internal/services/orders"
 	"github.com/leenzstra/WBL0/mocks"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 )
 
@@ -22,55 +22,61 @@ func prepareMocks() (*mocks.IOrderRepo, *MockCache, *zap.Logger) {
 	return &mocks.IOrderRepo{}, &MockCache{}, zap.NewNop()
 }
 
-func TestOrderRouteOk(t *testing.T) {
+type OrderRouteSuite struct {
+	suite.Suite
+	app *fiber.App
+	cache *MockCache
+	repo *mocks.IOrderRepo
+	service *orders.OrdersService
+}
+
+func (suite *OrderRouteSuite) SetupSuite() {
 	r, c, l := prepareMocks()
-	service := orders.NewService(r, c, l)
+	suite.cache = c
+	suite.repo = r
+	suite.service = orders.NewService(r, c, l)
+	suite.app = fiber.New()
+	SetupOrderRoutes(suite.app, suite.service, l)
+}
+
+
+func TestSuite(t *testing.T) {
+	suite.Run(t, new(OrderRouteSuite))
+}
+
+func (suite *OrderRouteSuite) TestOrderRouteOk() {
 	uid := "some_uid"
 
-	c.On("GetItem", uid).
+	suite.cache.On("GetItem", uid).
 		Times(1).
 		Return(models.OrderModel{}, true)
 
-	app := fiber.New()
-
-	SetupOrderRoutes(app, service, l)
-
 	req := httptest.NewRequest("GET", "/"+uid, nil)
-	resp, _ := app.Test(req, 1)
-	assert.Equal(t, 200, resp.StatusCode, "ok")
+	resp, err := suite.app.Test(req, 1)
+	suite.Equal(200, resp.StatusCode, "ok")
+	suite.NoError(err)
 }
 
-func TestOrderRouterNoSuchRoute(t *testing.T) {
-	r, c, l := prepareMocks()
-	service := orders.NewService(r, c, l)
-
-	app := fiber.New()
-
-	SetupOrderRoutes(app, service, l)
-
+func (suite *OrderRouteSuite) TestOrderRouterNoSuchRoute() {
 	req := httptest.NewRequest("GET", "/", nil)
-	resp, _ := app.Test(req, 1)
-	assert.Equal(t, 404, resp.StatusCode, "no such route")
+	resp, err := suite.app.Test(req, 1)
+	suite.Equal(404, resp.StatusCode, "no such route")
+	suite.NoError(err)
 }
 
-func TestOrderRouterOtherError(t *testing.T) {
-	r, c, l := prepareMocks()
-	service := orders.NewService(r, c, l)
+func (suite *OrderRouteSuite) TestOrderRouterOtherError() {
 	uid := "nosuchuid"
 
-	c.On("GetItem", uid).
+	suite.cache.On("GetItem", uid).
 		Times(1).
 		Return(models.OrderModel{}, false)
 
-	r.On("Get", context.Background(), uid).
+	suite.repo.On("Get", context.Background(), uid).
 		Times(1).
 		Return(nil, errors.New("no such uid"))
 
-	app := fiber.New()
-
-	SetupOrderRoutes(app, service, l)
-
 	req := httptest.NewRequest("GET", "/"+uid, nil)
-	resp, _ := app.Test(req, 1)
-	assert.Equal(t, 400, resp.StatusCode, "no such uid")
+	resp, err := suite.app.Test(req, 1)
+	suite.Equal(400, resp.StatusCode, "no such uid")
+	suite.NoError(err)
 }
